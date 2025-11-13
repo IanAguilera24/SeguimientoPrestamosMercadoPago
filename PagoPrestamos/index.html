@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seguimiento Préstamos Mercado Pago</title>
+    <link rel="stylesheet" href="sources/css/index.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <h1>Seguimiento de Préstamos Mercado Pago</h1>
+            <button id="menuToggle" class="menu-toggle" onclick="toggleMenu()">☰</button>
+        </header>
+        
+        <div id="sidebar" class="sidebar">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('new')">Nuevo Préstamo</button>
+                <button class="tab" onclick="switchTab('active')">Préstamos Activos</button>
+                <button class="tab" onclick="switchTab('closed')">Historial</button>
+                <button class="tab" onclick="switchTab('analisis')">Análisis</button>
+            </div>
+        </div>
+        
+        <div id="newLoanTab" class="tab-content active">
+            <div class="card">
+                <h2 style="margin-bottom: 20px; color: #333;">Registrar Nuevo Préstamo</h2>
+                <div class="form-group">
+                    <label>Fecha de Solicitud</label>
+                    <input type="date" id="loanDate" required>
+                </div>
+                <div class="form-group">
+                    <label>Monto Solicitado ($)</label>
+                    <input type="number" id="loanAmount" placeholder="1000" required>
+                </div>
+                <div class="form-group">
+                    <label>Plazo (meses)</label>
+                    <select id="loanTerm">
+                        <option value="6">6 meses</option>
+                        <option value="12" selected>12 meses</option>
+                        <option value="18">18 meses</option>
+                        <option value="24">24 meses</option>
+                    </select>
+                </div>
+                <button onclick="addLoan()">Registrar Préstamo</button>
+            </div>
+        </div>
+        
+        <div id="activeLoansTab" class="tab-content">
+            <div class="card">
+                <h2 style="margin-bottom: 20px; color: #333;">Préstamos Activos</h2>
+                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <button onclick="toggleActiveFilters()" style="width: 150px; background: #e0e5ec; border: none; padding: 10px 15px; border-radius: 8px; box-shadow: inset 3px 3px 6px rgba(163,177,198,0.6), inset -3px -3px 6px rgba(255,255,255,0.8); cursor: pointer;">Mostrar Filtros</button>
+                    <button id="viewToggle" class="btn-secondary" onclick="toggleView()" style="width: 150px;">Cambiar a Vista Tabla</button>
+                </div>
+                <div id="activeFilters" class="filters" style="display: none; margin-bottom: 20px; padding: 15px; background: #e0e5ec; border-radius: 8px; box-shadow: inset 6px 6px 12px rgba(163,177,198,0.6), inset -6px -6px 12px rgba(255,255,255,0.8);">
+                    <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                        <div class="form-group" style="margin: 0;">
+                            <label>Fecha Desde</label>
+                            <input type="date" id="activeFechaDesde">
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label>Fecha Hasta</label>
+                            <input type="date" id="activeFechaHasta">
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label>Ordenar por</label>
+                            <select id="activeOrdenPor">
+                                <option value="fecha">Fecha</option>
+                                <option value="monto">Monto</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label>Orden</label>
+                            <select id="activeOrdenDir">
+                                <option value="asc">Ascendente</option>
+                                <option value="desc">Descendente</option>
+                            </select>
+                        </div>
+                        <button onclick="applyActiveFilters()" style="align-self: flex-end;">Aplicar Filtros</button>
+                    </div>
+                </div>
+                <div id="activeLoans"></div>
+                <div id="activePagination" class="pagination"></div>
+            </div>
+        </div>
+        
+        <div id="closedLoansTab" class="tab-content">
+            <div class="card">
+                <h2 style="margin-bottom: 20px; color: #333;">Historial de Préstamos</h2>
+                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <button onclick="toggleClosedFilters()" style="width: 150px; background: #e0e5ec; border: none; padding: 10px 15px; border-radius: 8px; box-shadow: inset 3px 3px 6px rgba(163,177,198,0.6), inset -3px -3px 6px rgba(255,255,255,0.8); cursor: pointer;">Mostrar Filtros</button>
+                    <button id="closedViewToggle" class="btn-secondary" onclick="toggleClosedView()" style="width: 150px;">Cambiar a Vista Tabla</button>
+                </div>
+                <div id="closedFilters" class="filters" style="display: none; margin-bottom: 20px; padding: 15px; background: #e0e5ec; border-radius: 8px; box-shadow: inset 6px 6px 12px rgba(163,177,198,0.6), inset -6px -6px 12px rgba(255,255,255,0.8);">
+                    <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                        <div class="form-group" style="margin: 0;">
+                            <label>Fecha Desde</label>
+                            <input type="date" id="closedFechaDesde">
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label>Fecha Hasta</label>
+                            <input type="date" id="closedFechaHasta">
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label>Ordenar por</label>
+                            <select id="closedOrdenPor">
+                                <option value="fecha">Fecha</option>
+                                <option value="monto">Monto</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label>Orden</label>
+                            <select id="closedOrdenDir">
+                                <option value="asc">Ascendente</option>
+                                <option value="desc">Descendente</option>
+                            </select>
+                        </div>
+                        <button onclick="applyClosedFilters()" style="align-self: flex-end;">Aplicar Filtros</button>
+                    </div>
+                </div>
+                <div id="closedLoans"></div>
+                <div id="closedPagination" class="pagination"></div>
+            </div>
+        </div>
+        
+        <div id="analisisTab" class="tab-content">
+            <div class="card">
+                <h2 style="margin-bottom: 20px; color: #333;">Análisis Gráfico</h2>
+                <div class="config-section" style="margin-bottom: 30px; padding: 20px; background: #e0e5ec; border-radius: 8px; box-shadow: inset 6px 6px 12px rgba(163,177,198,0.6), inset -6px -6px 12px rgba(255,255,255,0.8);">
+                    <h3 style="margin-bottom: 15px; color: #333;">Configuración de Pagos</h3>
+                    <div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
+                        <div class="form-group" style="margin: 0;">
+                            <label>Fecha de Corte (día del mes)</label>
+                            <input type="number" id="fechaCorte" min="1" max="31" value="15" style="width: 80px;">
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label>Fecha Límite de Pago (día del mes)</label>
+                            <input type="number" id="fechaLimite" min="1" max="31" value="20" style="width: 80px;">
+                        </div>
+                        <button onclick="saveConfig()" style="align-self: flex-end;">Guardar Configuración</button>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                    <div>
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                    <div>
+                        <canvas id="amountChart"></canvas>
+                    </div>
+                    <div>
+                        <canvas id="amountByMonthChart"></canvas>
+                    </div>
+                    <div>
+                        <canvas id="termChart"></canvas>
+                    </div>
+                    <div style="grid-column: span 2;">
+                        <canvas id="monthlyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="sources/js/index.js"></script>
+</body>
+</html>
